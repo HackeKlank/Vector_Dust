@@ -30,7 +30,7 @@ bl_info = {
 
 # <editor-fold desc="Control Panel">
 class CONTROL_PT_Panel(bpy.types.Panel):
-    bl_label = 'Control Panel'
+    bl_label = ''
     bl_idname = 'CONTROL_PT_Panel'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -38,6 +38,7 @@ class CONTROL_PT_Panel(bpy.types.Panel):
 
     def draw_header(self, context):
         row = self.layout.row()
+        row.label(text='Control Panel')
         row.operator('ctp.sqn_add', icon='PLUS')
         row.operator('ctp.clear', icon='X')
 
@@ -79,7 +80,7 @@ class IterationFolder(bpy.types.PropertyGroup):
     iterations: IntProperty(default=1)
 
 
-class VariablesFolder(bpy.types.PropertyGroup):
+class VariablesPanel(bpy.types.PropertyGroup):
     name: StringProperty(default='Variables')
     placeholders: CollectionProperty(type=StringPropertyGroup)
     replacements: CollectionProperty(type=StringPropertyGroup)
@@ -106,7 +107,7 @@ class TransformationPanel(bpy.types.PropertyGroup):
 class MultiItem(bpy.types.PropertyGroup):
     ITN: CollectionProperty(type=IterationFolder)
     SQN: CollectionProperty(type=SequenceFolder)
-    VAR: CollectionProperty(type=VariablesFolder)
+    VAR: CollectionProperty(type=VariablesPanel)
 
     GRD: CollectionProperty(type=GridMakerPanel)
     TRF: CollectionProperty(type=TransformationPanel)
@@ -133,14 +134,20 @@ def make_button(multi_item, function: str):
 
         match function:
 
-            case 'add_bundle':
-                pass
-
-            case 'add_variables':
-                pass
-
             case 'execute':
                 execute_item_function(multi_item)
+            
+            case 'delete':
+                offspring = get_heritage(multi_item)
+                count = len(offspring)
+                while count > 0:
+                    count-=1
+                    item = offspring[count]
+                    panel = getattr(bpy.types, item.panel_id, None)
+                    if panel is not None:
+                        bpy.utils.unregister_class(panel)
+                    MultiItemPool.remove(get_position(offspring[count]))
+
 
             case 'swap_up':
 
@@ -189,29 +196,6 @@ def make_button(multi_item, function: str):
 
     bpy.utils.register_class(BUTTON_OT_Basic)
 
-def execute_item_function(multi_item):
-
-    folder_types = ['SQN', 'ITN']
-
-    match multi_item.mode:
-
-        case multi_item.mode if multi_item in folder_types:
-
-            repetitions = 1
-
-            if multi_item.mode == 'ITN':
-                repetitions = multi_item.ITN[0].iterations
-
-            for _ in range(repetitions):
-                MultiItemPool = bpy.context.scene.MultiItemPool
-                child_list = []
-                for item in MultiItemPool:
-                    if item.parent_number == multi_item.panel_number:
-                        child_list.append(item)
-                for child in child_list:
-                    execute_item_function(child)
-                    
-
 # </editor-fold>
 
 
@@ -223,6 +207,13 @@ def clear_cabinet():
     MultiItemPool = bpy.context.scene.MultiItemPool
     MultiItemPool.clear()
 
+
+def get_position(multi_item):
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    for i, item in enumerate(MultiItemPool):
+        if item.panel_number == multi_item.panel_number:
+            return i
+    return {'NO PANEL FOUND'}
 
 def file_panel(parent_item, type):
     bpy.context.scene.CurrentPanelNumber += 1
@@ -260,6 +251,50 @@ def erase_panels():
             cls = getattr(bpy.types, panel_class_name)
             bpy.utils.unregister_class(cls)
 
+def execute_item_function(multi_item):
+
+    folder_types = ['SQN', 'ITN']
+
+    match multi_item.mode:
+
+        case multi_item.mode if multi_item in folder_types:
+
+            repetitions = 1
+
+            if multi_item.mode == 'ITN':
+                repetitions = multi_item.ITN[0].iterations
+
+            for _ in range(repetitions):
+                MultiItemPool = bpy.context.scene.MultiItemPool
+                child_list = []
+                for item in MultiItemPool:
+                    if item.parent_number == multi_item.panel_number:
+                        child_list.append(item)
+                for child in child_list:
+                    execute_item_function(child)
+
+def get_children(multi_item, start_index=0):
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    list = []
+    for i in range(start_index, len(MultiItemPool)):
+        if MultiItemPool[i].parent_number == multi_item.panel_number:
+            list.append(MultiItemPool[i])
+    return list
+
+
+def get_heritage(multi_item):
+    list = []
+    list.append(multi_item)
+    start_pos = get_position(multi_item)
+    def loop(in_item, start_position):
+        if in_item.generic_type == 'FOLDER':
+            child_list = get_children(in_item, start_position)
+            if len(child_list)>0:
+                for item in child_list:
+                    list.append(item)
+                    loop(item, get_position(item))
+    loop(multi_item, start_pos)
+    return list
 
 # </editor-fold>
 
@@ -373,8 +408,8 @@ def redraw():
 # <editor-fold desc="Registration">
 SystemDataClasses = [
     StringPropertyGroup,
-    GridMakerPanel, TransformationPanel,
-    VariablesFolder, SequenceFolder, IterationFolder,
+    GridMakerPanel, TransformationPanel, VariablesPanel,
+    SequenceFolder, IterationFolder,
     MultiItem,
 ]
 SystemPanels = [CONTROL_OT_SqnAddButton, CONTROL_OT_Clear, CONTROL_PT_Panel, ]
