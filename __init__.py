@@ -126,19 +126,29 @@ class MultiItem(bpy.types.PropertyGroup):
 
 
 # <editor-fold desc="Special Buttons and Functions">
-def make_button(multi_item, function: str):
+def make_button(panel_number: int, function: str):
 
-    def button_operation():
+    class BUTTON_OT_Basic(bpy.types.Operator):
+        bl_label = ''
+        bl_idname = 'btn.' + str(panel_number) + '_' + function
+        def execute(self, context):
+            button_operation(panel_number, function)
+            return {'FINISHED'}
+
+    bpy.utils.register_class(BUTTON_OT_Basic)
+
+def button_operation(panel_number, function):
 
         MultiItemPool = bpy.context.scene.MultiItemPool
+        item_in = get_multi_item(panel_number)
 
         match function:
 
             case 'execute':
-                execute_item_function(multi_item)
+                execute_item_function(item_in)
             
             case 'delete':
-                offspring = get_heritage(multi_item)
+                offspring = get_heritage(item_in)
                 count = len(offspring)
                 while count > 0:
                     count-=1
@@ -147,6 +157,7 @@ def make_button(multi_item, function: str):
                     if panel is not None:
                         item.is_drawn = False
                         bpy.utils.unregister_class(panel)
+                clear_undrawns()
 
             case 'swap_up':
 
@@ -154,10 +165,10 @@ def make_button(multi_item, function: str):
                 reference_position = -1
 
                 for position, item in enumerate(MultiItemPool):
-                    if item.panel_number == multi_item.panel_number:
+                    if item.panel_number == item_in.panel_number:
                         reference_position = item.panel_number
                         break
-                    elif item.parent_number == multi_item.parent_number:
+                    elif item.parent_number == item_in.parent_number:
                         previous_child_position = position
 
                 if previous_child_position == -1:
@@ -172,10 +183,10 @@ def make_button(multi_item, function: str):
                 panel_found = False
 
                 for position, item in enumerate(MultiItemPool):
-                    if item.panel_number == multi_item.panel_number and not panel_found:
+                    if item.panel_number == item_in.panel_number and not panel_found:
                         reference_position = item.panel_number
                         panel_found = True
-                    elif item.parent_number == multi_item.parent_number:
+                    elif item.parent_number == item_in.parent_number:
                         next_child_position = position
                         break
 
@@ -184,16 +195,6 @@ def make_button(multi_item, function: str):
                 else:
                     MultiItemPool.move(next_child_position, reference_position)
                     MultiItemPool.move(reference_position+1, next_child_position)
-
-    class BUTTON_OT_Basic(bpy.types.Operator):
-        bl_label = ''
-        bl_idname = 'btn.' + str(multi_item.panel_number) + '_' + function
-
-        def execute(self, context):
-            button_operation()
-            return {'FINISHED'}
-
-    bpy.utils.register_class(BUTTON_OT_Basic)
 
 # </editor-fold>
 
@@ -211,6 +212,13 @@ def get_position(multi_item):
     for i, item in enumerate(MultiItemPool):
         if item.panel_number == multi_item.panel_number:
             return i
+    return {'NO PANEL FOUND'}
+
+def get_multi_item(panel_number):
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    for item in MultiItemPool:
+        if item.panel_number == panel_number:
+            return item
     return {'NO PANEL FOUND'}
 
 def file_panel(parent_item, type):
@@ -314,8 +322,8 @@ def draw_item(multi_item):
     
     template_button_name = 'btn.' + str(multi_item.panel_number) + '_' 
     is_child = True if multi_item.parent_id != 'CONTROL_PT_Panel' else False
-    make_button(multi_item, 'execute')
-    make_button(multi_item, 'delete')
+    make_button(multi_item.panel_number, 'execute')
+    make_button(multi_item.panel_number, 'delete')
 
     if is_child:
         make_button(multi_item, 'swap_up')
@@ -338,7 +346,7 @@ def draw_item(multi_item):
             grid_info = multi_item.GRD
 
             class GRID_PT_Panel(bpy.types.Panel):
-                bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Space Shaper'
+                bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Dust Panel'
                 bl_idname = multi_item.panel_id
                 bl_label = bl_idname
                 bl_parent_id = multi_item.parent_id
@@ -368,7 +376,7 @@ def draw_item(multi_item):
             sequence_info = multi_item.SQN[0]
 
             class SQN_PT_Panel(bpy.types.Panel):
-                bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Space Shaper'
+                bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Dust Panel'
                 bl_idname = multi_item.panel_id
                 bl_label = bl_idname
                 bl_parent_id = multi_item.parent_id
