@@ -21,14 +21,13 @@ bl_info = {
     "name" : "Vector Dust",
     "author" : "Frank Dininno",
     "description" : "",
-    "blender" : (2, 80, 0),
-    "version" : (0, 0, 1),
-    "location" : "",
+    "blender" : (4, 00, 0),
+    "version" : (0, 0, 2),
+    "location" : "VIEW_3D",
     "warning" : "",
-    "category" : "Generic"
+    "category" : "Dust Panel"
 }
 
-# <editor-fold desc="Control Panel">
 class CONTROL_PT_Panel(bpy.types.Panel):
     bl_label = ''
     bl_idname = 'CONTROL_PT_Panel'
@@ -62,11 +61,13 @@ class CONTROL_OT_Clear(bpy.types.Operator):
     def execute(self, context):
         clear_cabinet()
         return {'FINISHED'}
-# </editor-fold>
 
 
-# <editor-fold desc="Panel Types">
 class StringPropertyGroup(bpy.types.PropertyGroup):
+    value: bpy.props.StringProperty()
+
+
+class IntPropertyGroup(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty()
 
 
@@ -75,13 +76,19 @@ class SequenceFolder(bpy.types.PropertyGroup):
 
 
 class IterationFolder(bpy.types.PropertyGroup):
-    name: StringProperty(default='For Loop')
+    name: StringProperty(default='Repeater')
     loop_variable_name: StringProperty(default='i')
     iterations: IntProperty(default=1)
 
 
 class VariablesPanel(bpy.types.PropertyGroup):
     name: StringProperty(default='Variables')
+    variables: CollectionProperty(type=StringPropertyGroup)
+    values: CollectionProperty(type=IntPropertyGroup)
+
+
+class FunctionsPanel(bpy.types.PropertyGroup):
+    name: StringProperty(default='Functions')
     placeholders: CollectionProperty(type=StringPropertyGroup)
     replacements: CollectionProperty(type=StringPropertyGroup)
 
@@ -120,24 +127,58 @@ class MultiItem(bpy.types.PropertyGroup):
     parent_number: IntProperty()
     panel_id: StringProperty()
     parent_id: StringProperty(default='CONTROL_PT_Panel')
+    
+def make_enum_menu(panel_number):
 
+    items = [
+    ("SQN", "Bundle", "A folder for other panels"),
+    ("ITN", "Repeater", "Folder for other panels with the option to itterate"),
+    ("FNS", "Expression Collection", "Allows access to all offspring folders of the expressions stored inside"),
+    ("VAR", "Variable Collection", "Allows access to all offspring folders of the variables stored inside"),
+    ("GRD", "Grid", "Creates a grid in space"),
+    ("TRF", "Transformation", "Performes a parameterization on selected objects"),
+    ("EXE", "Code Execution", "Allows general python code execution"),
+    ("FRM", "Manipulate Frames", "Manipulates Playbar"),
+    ("MOD", "Blender Modification", "Set and or apply Blender Modifications"),
+    ("MAN", "Selection by Name", "Select or duplicate objects by name"),
+            ]
 
-# </editor-fold>
+    setattr(bpy.types.Scene, 'enum_menu_'+str(panel_number), bpy.props.EnumProperty(
+    items=items,
+    name="My Enum Property",
+    description="Choose an option",
+    update=update_enum(panel_number)
+            ))
+    
+def make_enum_preset_menu(panel_number):
+    
+    items = [
+    ("OPTION1", "Sphere Parameterization", "Description for Option 1"),
+    ("OPTION2", "Differential Equations Solution", "Description for Option 2"),
+    ("OPTION3", "Option 3", "Description for Option 3"),
+            ]
 
+    setattr(bpy.types.Scene, 'enum_menu_'+str(panel_number), bpy.props.EnumProperty(
+    items=items,
+    name="My Enum Property",
+    description="Choose an option",
+    update=update_enum(panel_number)
+            ))
 
-# <editor-fold desc="Special Buttons and Functions">
 def make_button(panel_number: int, function: str):
 
     class BUTTON_OT_Basic(bpy.types.Operator):
+
         bl_label = ''
         bl_idname = 'btn.' + str(panel_number) + '_' + function
+
         def execute(self, context):
             button_operation(panel_number, function)
             return {'FINISHED'}
 
     bpy.utils.register_class(BUTTON_OT_Basic)
 
-def button_operation(panel_number, function):
+def button_operation(panel_number: int, function:str):
 
         MultiItemPool = bpy.context.scene.MultiItemPool
         item_in = get_multi_item(panel_number)
@@ -196,11 +237,10 @@ def button_operation(panel_number, function):
                     MultiItemPool.move(next_child_position, reference_position)
                     MultiItemPool.move(reference_position+1, next_child_position)
 
-# </editor-fold>
-
-
-# <editor-fold desc="File Operations">
-
+def update_enum(panel_number):
+    def inner_function(self, context):
+        file_panel(get_multi_item(panel_number), getattr(self, 'enum_menu_'+str(panel_number)))
+    return inner_function #The returned function is used as the update function
 
 def clear_cabinet():
     erase_panels()
@@ -312,12 +352,6 @@ def get_heritage(multi_item):
     loop(multi_item, start_pos)
     return list
 
-# </editor-fold>
-
-
-# <editor-fold desc="System Displayer">
-
-
 def draw_item(multi_item):
     
     template_button_name = 'btn.' + str(multi_item.panel_number) + '_' 
@@ -417,14 +451,9 @@ def redraw():
     erase_panels()
     display_cabinet()
 
-
-# </editor-fold>
-
-
-# <editor-fold desc="Registration">
 SystemDataClasses = [
-    StringPropertyGroup,
-    GridMakerPanel, TransformationPanel, VariablesPanel,
+    StringPropertyGroup, IntPropertyGroup,
+    GridMakerPanel, TransformationPanel, VariablesPanel, FunctionsPanel,
     SequenceFolder, IterationFolder,
     MultiItem,
 ]
@@ -451,5 +480,11 @@ def register():
 
 def unregister():
     unregisterFileSystem()
-# </editor-fold>
 
+# --init--
+# registration
+# control_panel
+# panel_creation
+# ui_operators
+# property_groups
+# bpy_operations
