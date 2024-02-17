@@ -145,9 +145,8 @@ def make_button(multi_item, function: str):
                     item = offspring[count]
                     panel = getattr(bpy.types, item.panel_id, None)
                     if panel is not None:
+                        item.is_drawn = False
                         bpy.utils.unregister_class(panel)
-                    MultiItemPool.remove(get_position(offspring[count]))
-
 
             case 'swap_up':
 
@@ -204,8 +203,7 @@ def make_button(multi_item, function: str):
 
 def clear_cabinet():
     erase_panels()
-    MultiItemPool = bpy.context.scene.MultiItemPool
-    MultiItemPool.clear()
+    clear_undrawns()
 
 
 def get_position(multi_item):
@@ -250,6 +248,16 @@ def erase_panels():
             item.is_drawn = False
             cls = getattr(bpy.types, panel_class_name)
             bpy.utils.unregister_class(cls)
+
+def clear_undrawns():
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    count = len(MultiItemPool)
+    while count > 0:
+        count -= 1
+        item = MultiItemPool[count]
+        if not item.is_drawn:
+            position = get_position(item)
+            MultiItemPool.remove(position)
 
 def execute_item_function(multi_item):
 
@@ -332,7 +340,7 @@ def draw_item(multi_item):
             class GRID_PT_Panel(bpy.types.Panel):
                 bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Space Shaper'
                 bl_idname = multi_item.panel_id
-                bl_label = ''
+                bl_label = bl_idname
                 bl_parent_id = multi_item.parent_id
                 bl_options = {'DEFAULT_CLOSED'}
 
@@ -362,7 +370,7 @@ def draw_item(multi_item):
             class SQN_PT_Panel(bpy.types.Panel):
                 bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Space Shaper'
                 bl_idname = multi_item.panel_id
-                bl_label = ''
+                bl_label = bl_idname
                 bl_parent_id = multi_item.parent_id
                 bl_options = {'DEFAULT_CLOSED'}
 
