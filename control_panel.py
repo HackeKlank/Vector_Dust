@@ -4,14 +4,14 @@ import bpy
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-module_name_1 = "panel_creation"  # Name of the module you want to import
+module_name_1 = "ui_creation"  # Name of the module you want to import
 module_file_1 = module_name_1 + ".py"
 module_path_1 = os.path.join(current_dir, module_file_1)
 
 # Load the module
 spec_1 = importlib.util.spec_from_file_location(module_name_1, module_path_1)
-pc = importlib.util.module_from_spec(spec_1)
-spec_1.loader.exec_module(pc)
+ui = importlib.util.module_from_spec(spec_1)
+spec_1.loader.exec_module(ui)
 
 module_name_2 = "cabinet_operations"  # Name of the module you want to import
 module_file_2 = module_name_2 + ".py"
@@ -46,7 +46,7 @@ class CONTROL_OT_SqnAddButton(bpy.types.Operator):
 
     def execute(self, context):
         cbt.file_panel(None, 'SQN')
-        pc.redraw()
+        ui.redraw()
         return {'FINISHED'}
 
 class CONTROL_OT_Clear(bpy.types.Operator):
@@ -54,8 +54,10 @@ class CONTROL_OT_Clear(bpy.types.Operator):
     bl_idname = 'ctp.clear'
 
     def execute(self, context):
-        pc.erase_panels()
+        ui.erase_panels()
         cbt.clear_undrawns()
+        CurrentPanelNumber = bpy.context.scene.CurrentPanelNumber
+        bpy.context.scene.CurrentPanelNumber = 0
         return {'FINISHED'}
 
 

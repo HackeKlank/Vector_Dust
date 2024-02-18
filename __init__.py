@@ -53,8 +53,7 @@ print('Addon Loaded')
 # --init--
 # registration
 # control_panel
-# panel_creation
-# ui_operators
+# ui_creatioin
 # cabinet_operations
 # property_groups
 # bpy_operations

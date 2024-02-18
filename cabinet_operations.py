@@ -64,12 +64,16 @@ def file_panel(parent_item, type):
 
     new_item.panel_number = CurrentNumber
     new_item.panel_id = 'PANEL_PT_' + str(new_item.panel_number)
+    new_item.type_count = 1 + count_type(get_offspring(parent_item), type)
+    print(new_item.type_count)
 
     if parent_item is not None:
         new_item.parent_number = parent_item.panel_number
         new_item.parent_id = 'PANEL_PT_' + str(parent_item.panel_number)
 
     exec('new_item.' + type + '.add()')
+    exec('new_item.' + type + '[0].name.join(" '+str(new_item.type_count)+'")')
+
 
 def execute_item_function(multi_item):
 
@@ -93,27 +97,64 @@ def execute_item_function(multi_item):
                 for child in child_list:
                     execute_item_function(child)
 
-def get_children(multi_item, start_index=0):
+def get_offspring(multi_item, start_index=0):
     MultiItemPool = bpy.context.scene.MultiItemPool
     list = []
-    for i in range(start_index, len(MultiItemPool)):
-        if MultiItemPool[i].parent_number == multi_item.panel_number:
-            list.append(MultiItemPool[i])
+    if multi_item:
+        for i in range(start_index, len(MultiItemPool)):
+            if MultiItemPool[i].parent_number == multi_item.panel_number:
+                list.append(MultiItemPool[i])
+    else:
+        for i in range(start_index, len(MultiItemPool)):
+            if MultiItemPool[i].parent_number == -1:
+                list.append(MultiItemPool[i])
     return list
 
-def get_heritage(multi_item):
+def get_heritage(multi_item, mode='ALL'):
     list = []
     list.append(multi_item)
     start_pos = get_position(multi_item)
     def loop(in_item, start_position):
         if in_item.generic_type == 'FOLDER':
-            child_list = get_children(in_item, start_position)
+            child_list = get_offspring(in_item, start_position)
             if len(child_list)>0:
                 for item in child_list:
-                    list.append(item)
+                    if mode=='ALL' or in_item.mode==mode:
+                        list.append(item)
                     loop(item, get_position(item))
     loop(multi_item, start_pos)
     return list
+
+def get_upfill(multi_item, mode='ALL'):
+    list = []
+    list.append(get_offspring(multi_item))
+    def loop(in_item):
+        if in_item.parent_number != -1:
+            parent = get_multi_item(in_item.parent_number)
+            child_list = get_offspring(parent, get_position(parent))
+            if mode=='ALL':
+                list.extend(child_list)
+            else:
+                for item in child_list:
+                    if item.mode == mode:
+                        list.append(item)
+            loop(item, get_position(item))
+        else:
+            child_list = bpy.context.scene.MultiItemPool
+            for item in child_list:
+                if mode=='ALL' or item.mode==mode:
+                    list.append(item)
+
+    loop(multi_item)
+    return list
+
+def count_type(in_list, mode: str):
+    count=0
+    for item in in_list:
+        if item.mode==mode:
+            count+=1
+    return count
+
 
 '''def replace_expressions(input_string):
     scene = bpy.context.scene

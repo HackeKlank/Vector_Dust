@@ -6,8 +6,8 @@ class StringPropertyGroup(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty()
 
 
-class IntPropertyGroup(bpy.types.PropertyGroup):
-    value: bpy.props.StringProperty()
+class FloatPropertyGroup(bpy.types.PropertyGroup):
+    value: bpy.props.FloatProperty()
 
 
 class SequenceFolder(bpy.types.PropertyGroup):
@@ -23,7 +23,7 @@ class IterationFolder(bpy.types.PropertyGroup):
 class VariablesPanel(bpy.types.PropertyGroup):
     name: StringProperty(default='Variables')
     variables: CollectionProperty(type=StringPropertyGroup)
-    values: CollectionProperty(type=IntPropertyGroup)
+    values: CollectionProperty(type=FloatPropertyGroup)
 
 
 class FunctionsPanel(bpy.types.PropertyGroup):
@@ -63,12 +63,13 @@ class MultiItem(bpy.types.PropertyGroup):
     mode: StringProperty()
     generic_type: StringProperty()
     panel_number: IntProperty()
-    parent_number: IntProperty()
+    parent_number: IntProperty(default=-1)
     panel_id: StringProperty()
     parent_id: StringProperty(default='CONTROL_PT_Panel')
+    type_count: IntProperty()
 
 SystemDataClasses = [
-    StringPropertyGroup, IntPropertyGroup,
+    StringPropertyGroup, FloatPropertyGroup,
     GridMakerPanel, TransformationPanel, VariablesPanel, FunctionsPanel,
     SequenceFolder, IterationFolder,
     MultiItem,
