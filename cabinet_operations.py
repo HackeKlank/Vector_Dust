@@ -1,17 +1,20 @@
-from property_groups import *
-from bpy_operations import  *
+import importlib.util
+import bpy
 
-def erase_panels():
-    MultiItemPool = bpy.context.scene.MultiItemPool
-    length = len(MultiItemPool)
-    while length > 0:
-        length -= 1
-        item = MultiItemPool[length]
-        panel_class_name = item.panel_id  # replace with your panel class's bl_idname
-        if item.is_drawn:
-            item.is_drawn = False
-            cls = getattr(bpy.types, panel_class_name)
-            bpy.utils.unregister_class(cls)
+file_path_1 = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/property_groups.py'
+
+# Load the module
+spec_1 = importlib.util.spec_from_file_location("propety_gruops", file_path_1)
+pgps = importlib.util.module_from_spec(spec_1)
+spec_1.loader.exec_module(pgps)
+
+file_path_2 = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/bpy_operations.py'
+
+# Load the module
+spec_2 = importlib.util.spec_from_file_location("bpy_operations", file_path_2)
+bops = importlib.util.module_from_spec(spec_2)
+spec_2.loader.exec_module(bops)
+
 
 def clear_undrawns():
     MultiItemPool = bpy.context.scene.MultiItemPool
@@ -22,10 +25,6 @@ def clear_undrawns():
         if not item.is_drawn:
             position = get_position(item)
             MultiItemPool.remove(position)
-
-def clear_cabinet():
-    erase_panels()
-    clear_undrawns()
 
 def get_position(multi_item):
     MultiItemPool = bpy.context.scene.MultiItemPool

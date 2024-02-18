@@ -1,5 +1,24 @@
-from ui_operators import *
+import importlib.util
+import bpy
 
+file_path = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/ui_operators.py'
+
+# Load the module
+spec = importlib.util.spec_from_file_location("ui_operators", file_path)
+ui = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ui)
+
+def erase_panels():
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    length = len(MultiItemPool)
+    while length > 0:
+        length -= 1
+        item = MultiItemPool[length]
+        panel_class_name = item.panel_id  # replace with your panel class's bl_idname
+        if item.is_drawn:
+            item.is_drawn = False
+            cls = getattr(bpy.types, panel_class_name)
+            bpy.utils.unregister_class(cls)
 
 def redraw():
     erase_panels()
@@ -29,12 +48,12 @@ def draw_item(multi_item):
     
     template_button_name = 'btn.' + str(multi_item.panel_number) + '_' 
     is_child = True if multi_item.parent_id != 'CONTROL_PT_Panel' else False
-    make_button(multi_item.panel_number, 'execute')
-    make_button(multi_item.panel_number, 'delete')
+    ui.make_button(multi_item.panel_number, 'execute')
+    ui.make_button(multi_item.panel_number, 'delete')
 
     if is_child:
-        make_button(multi_item, 'swap_up')
-        make_button(multi_item, 'swamp_down')
+        ui.make_button(multi_item, 'swap_up')
+        ui.make_button(multi_item, 'swamp_down')
     
     def generic_header(self, context, info):
         layout = self.layout

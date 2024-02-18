@@ -12,8 +12,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import importlib.util
 
-from registration import *
+file_path = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/registration.py'
+
+# Load the module
+spec = importlib.util.spec_from_file_location("registration", file_path)
+reg = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(reg)
+
 
 bl_info = {
     "name" : "Vector Dust",
@@ -28,11 +35,11 @@ bl_info = {
 
 
 def register():
-    register_all()
+    reg.register_all()
 
 
 def unregister():
-    unregister_all()
+    reg.unregister_all()
 
 # --init--
 # registration

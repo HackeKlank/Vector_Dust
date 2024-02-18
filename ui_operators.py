@@ -1,4 +1,14 @@
-from cabinet_operations import *
+import importlib.util
+
+file_path = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/cabinet_operations.py'
+
+# Load the module
+spec = importlib.util.spec_from_file_location("cabinet_operations", file_path)
+cbt = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cbt)
+
+
+import bpy
 
 def make_button(panel_number: int, function: str):
 
@@ -16,15 +26,15 @@ def make_button(panel_number: int, function: str):
 def button_operation(panel_number: int, function:str):
 
         MultiItemPool = bpy.context.scene.MultiItemPool
-        item_in = get_multi_item(panel_number)
+        item_in = cbt.get_multi_item(panel_number)
 
         match function:
 
             case 'execute':
-                execute_item_function(item_in)
+                cbt.execute_item_function(item_in)
             
             case 'delete':
-                offspring = get_heritage(item_in)
+                offspring = cbt.get_heritage(item_in)
                 count = len(offspring)
                 while count > 0:
                     count-=1
@@ -33,7 +43,7 @@ def button_operation(panel_number: int, function:str):
                     if panel is not None:
                         item.is_drawn = False
                         bpy.utils.unregister_class(panel)
-                clear_undrawns()
+                cbt.clear_undrawns()
 
             case 'swap_up':
 
@@ -111,5 +121,5 @@ def make_enum_preset_menu(panel_number):
 
 def update_enum(panel_number):
     def inner_function(self, context):
-        file_panel(get_multi_item(panel_number), getattr(self, 'enum_menu_'+str(panel_number)))
+        cbt.file_panel(cbt.get_multi_item(panel_number), getattr(self, 'enum_menu_'+str(panel_number)))
     return inner_function #The returned function is used as the update function
