@@ -1,9 +1,16 @@
 import importlib.util
+import os
 
-file_path = 'C:/Users/frank/AppData/Roaming/Blender Foundation/Blender/4.0/scripts/addons/Vector_Dust/cabinet_operations.py'
+# Get the directory of the current script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to the module you want to import
+module_name = "cabinet_operations"  # Name of the module you want to import
+module_file = module_name + ".py"
+module_path = os.path.join(current_dir, module_file)
 
 # Load the module
-spec = importlib.util.spec_from_file_location("cabinet_operations", file_path)
+spec = importlib.util.spec_from_file_location(module_name, module_path)
 cbt = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cbt)
 
@@ -29,6 +36,9 @@ def button_operation(panel_number: int, function:str):
         item_in = cbt.get_multi_item(panel_number)
 
         match function:
+
+            case 'add':
+                bpy.ops.object.my_enum_operator('INVOKE_DEFAULT')
 
             case 'execute':
                 cbt.execute_item_function(item_in)
@@ -82,42 +92,47 @@ def button_operation(panel_number: int, function:str):
                     MultiItemPool.move(next_child_position, reference_position)
                     MultiItemPool.move(reference_position+1, next_child_position)
 
-def make_enum_menu(panel_number):
+def make_enum_menu(panel_number, is_preset=False):
+    items=[]
+    if not is_preset:
+        items = [
+        ("SQN", "Bundle", "A folder for other panels"),
+        ("ITN", "Repeater", "Folder for other panels with the option to itterate"),
+        ("FNS", "Expression Collection", "Allows access to all offspring folders of the expressions stored inside"),
+        ("VAR", "Variable Collection", "Allows access to all offspring folders of the variables stored inside"),
+        ("GRD", "Grid", "Creates a grid in space"),
+        ("TRF", "Transformation", "Performes a parameterization on selected objects"),
+        ("EXE", "Code Execution", "Allows general python code execution"),
+        ("FRM", "Manipulate Frames", "Manipulates Playbar"),
+        ("MOD", "Blender Modification", "Set and or apply Blender Modifications"),
+        ("MAN", "Selection by Name", "Select or duplicate objects by name"),
+                ]
+    else:
+        items = [
+            ("SPHERE", "Spheical Parameterization", "Create a Spherical Parameterization"),
+        ]
 
-    items = [
-    ("SQN", "Bundle", "A folder for other panels"),
-    ("ITN", "Repeater", "Folder for other panels with the option to itterate"),
-    ("FNS", "Expression Collection", "Allows access to all offspring folders of the expressions stored inside"),
-    ("VAR", "Variable Collection", "Allows access to all offspring folders of the variables stored inside"),
-    ("GRD", "Grid", "Creates a grid in space"),
-    ("TRF", "Transformation", "Performes a parameterization on selected objects"),
-    ("EXE", "Code Execution", "Allows general python code execution"),
-    ("FRM", "Manipulate Frames", "Manipulates Playbar"),
-    ("MOD", "Blender Modification", "Set and or apply Blender Modifications"),
-    ("MAN", "Selection by Name", "Select or duplicate objects by name"),
-            ]
+    class ENUM_ET_Menu(bpy.types.Operator):
+        bl_idname = "emen." + str(panel_number)
+        bl_label = "Choose Option"
+        
+        options: bpy.props.EnumProperty(
+                               name="Options", 
+                               description="Choose an option", 
+                               items=items,
+                               update=update_enum(panel_number) 
+                               )
 
-    setattr(bpy.types.Scene, 'enum_menu_'+str(panel_number), bpy.props.EnumProperty(
-    items=items,
-    name="My Enum Property",
-    description="Choose an option",
-    update=update_enum(panel_number)
-            ))
+        def execute(self, context):
+            self.report({'INFO'}, f"Selected: {self.my_enum}")
+            return {'FINISHED'}
+
+        def invoke(self, context, event):
+            wm = context.window_manager
+            return wm.invoke_props_dialog(self)
+
+    bpy.utils.register_class(ENUM_ET_Menu)
     
-def make_enum_preset_menu(panel_number):
-    
-    items = [
-    ("OPTION1", "Sphere Parameterization", "Description for Option 1"),
-    ("OPTION2", "Differential Equations Solution", "Description for Option 2"),
-    ("OPTION3", "Rotation", "Description for Option 3"),
-            ]
-
-    setattr(bpy.types.Scene, 'enum_menu_'+str(panel_number), bpy.props.EnumProperty(
-    items=items,
-    name="My Enum Property",
-    description="Choose an option",
-    update=update_enum(panel_number)
-            ))
 
 def update_enum(panel_number):
     def inner_function(self, context):
