@@ -154,17 +154,3 @@ def count_type(in_list, mode: str):
         if item.mode==mode:
             count+=1
     return count
-
-
-'''def replace_expressions(input_string):
-    scene = bpy.context.scene
-    while True:
-        replaced = False
-        for ue, er in zip(scene.universalExpressions.panel_specs, scene.expressionReplacement.panel_specs):
-            new_string = input_string.replace(ue.value, er.value)
-            if new_string != input_string:
-                replaced = True
-            input_string = new_string
-        if not replaced:
-            break
-    return input_string'''
