@@ -15,9 +15,7 @@ spec = importlib.util.spec_from_file_location(module_name, module_path)
 cbt = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cbt)
 
-
 # Panel Creation
-
 def erase_panels():
     MultiItemPool = bpy.context.scene.MultiItemPool
     length = len(MultiItemPool)
@@ -26,7 +24,7 @@ def erase_panels():
         item = MultiItemPool[length]
         panel_class_name = item.panel_id  # replace with your panel class's bl_idname
         if item.is_drawn:
-            item.is_drawn = False
+            setattr(item, 'is_drawn', False)
             cls = getattr(bpy.types, panel_class_name)
             bpy.utils.unregister_class(cls)
 
@@ -66,7 +64,7 @@ def draw_panel(multi_item):
 
     if is_child:
         make_button(multi_item.panel_number, 'swap_up')
-        make_button(multi_item.panel_number, 'swamp_down')
+        make_button(multi_item.panel_number, 'swap_down')
 
     if is_folder:
         make_button(multi_item.panel_number, 'add')
@@ -77,15 +75,17 @@ def draw_panel(multi_item):
         if is_folder:
             layout.operator(template_button_name + 'add', icon='PLUS')
         if is_child:
-            layout.operator(template_button_name + 'swap_up', icon='TRIA_UP')
-            layout.operator(template_button_name + 'swap_down', icon='TRIA_DOWN')
+            if cbt.get_prev_sibling(multi_item) is not None:
+                layout.operator(template_button_name + 'swap_up', icon='TRIA_UP')
+            if cbt.get_next_sibling(multi_item) is not None:
+                layout.operator(template_button_name + 'swap_down', icon='TRIA_DOWN')
         layout.operator(template_button_name + 'execute', text='E')
         layout.operator(template_button_name + 'delete', text='X')
         layout.prop(multi_item, 'is_active', text='')
 
     match multi_item.mode:
 
-        case 'GRID':
+        case 'GRD':
 
             grid_info = multi_item.GRD[0]
 
@@ -127,6 +127,7 @@ def draw_panel(multi_item):
 
                 def draw_header(self, context):
                     generic_header(self, context, sequence_info)
+                    redraw()
 
                 def draw(self, context):
                     layout = self.layout
@@ -134,8 +135,10 @@ def draw_panel(multi_item):
 
             bpy.utils.register_class(SQN_PT_Panel)
 
-
-    multi_item.is_drawn = True if hasattr(bpy.types, multi_item.panel_id) else False
+    if hasattr(bpy.types, multi_item.panel_id):
+        setattr(multi_item, 'is_drawn', True) 
+    else: 
+        setattr(multi_item, 'is_drawn', False)
 
 
 # Button Creation
@@ -183,44 +186,18 @@ def button_operation(panel_number: int, function:str):
 
             case 'swap_up':
 
-                previous_child_position = -1
-                reference_position = -1
+                current_position = cbt.get_position(item_in)
+                sibling_position = cbt.get_next_sibling(item_in)
 
-                for position, item in enumerate(MultiItemPool):
-                    if item.panel_number == item_in.panel_number:
-                        reference_position = item.panel_number
-                        break
-                    elif item.parent_number == item_in.parent_number:
-                        previous_child_position = position
+                MultiItemPool.move(sibling_position, current_position)
 
-                if previous_child_position == -1:
-                    return {'NO PREVIOUS PANEL'}
-                else:
-                    MultiItemPool.move(previous_child_position, reference_position)
-                    MultiItemPool.move(reference_position - 1, previous_child_position)
-
-                redraw()
 
             case 'swap_down':
-                next_child_position = -1
-                reference_position = -1
-                panel_found = False
-
-                for position, item in enumerate(MultiItemPool):
-                    if item.panel_number == item_in.panel_number and not panel_found:
-                        reference_position = item.panel_number
-                        panel_found = True
-                    elif item.parent_number == item_in.parent_number:
-                        next_child_position = position
-                        break
-
-                if next_child_position == -1:
-                    return {'NO SUBSEQUENT PANEL'}
-                else:
-                    MultiItemPool.move(next_child_position, reference_position)
-                    MultiItemPool.move(reference_position+1, next_child_position)
                 
-                redraw()
+                current_position = cbt.get_position(item_in)
+                sibling_position = cbt.get_next_sibling(item_in)
+
+                MultiItemPool.move(current_position, sibling_position)
 
 def make_enum_menu(panel_number, is_preset=False):
     items=[]

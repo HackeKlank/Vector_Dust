@@ -64,15 +64,12 @@ def file_panel(parent_item, type):
 
     new_item.panel_number = CurrentNumber
     new_item.panel_id = 'PANEL_PT_' + str(new_item.panel_number)
-    new_item.type_count = 1 + count_type(get_offspring(parent_item), type)
-    print(new_item.type_count)
 
     if parent_item is not None:
         new_item.parent_number = parent_item.panel_number
         new_item.parent_id = 'PANEL_PT_' + str(parent_item.panel_number)
 
     exec('new_item.' + type + '.add()')
-    exec('new_item.' + type + '[0].name.join(" '+str(new_item.type_count)+'")')
 
 
 def execute_item_function(multi_item):
@@ -154,3 +151,22 @@ def count_type(in_list, mode: str):
         if item.mode==mode:
             count+=1
     return count
+
+def get_prev_sibling(multi_item):
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    for position, item in enumerate(MultiItemPool):
+        if item.panel_number == multi_item.panel_number:
+            return None
+        elif item.parent_number == multi_item.parent_number:
+            return position
+    return None
+
+def get_next_sibling(multi_item):
+    MultiItemPool = bpy.context.scene.MultiItemPool
+    found_start=False
+    for position, item in enumerate(MultiItemPool):
+        if item.panel_number == multi_item.panel_number:
+            found_start=True
+        elif item.parent_number == multi_item.parent_number and found_start:
+            return position
+    return None

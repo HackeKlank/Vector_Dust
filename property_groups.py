@@ -66,7 +66,6 @@ class MultiItem(bpy.types.PropertyGroup):
     parent_number: IntProperty(default=-1)
     panel_id: StringProperty()
     parent_id: StringProperty(default='CONTROL_PT_Panel')
-    type_count: IntProperty()
 
 SystemDataClasses = [
     StringPropertyGroup, FloatPropertyGroup,

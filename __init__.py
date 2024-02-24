@@ -32,9 +32,11 @@ def register():
 
 
 def unregister():
-    reg.register_all()
+    reg.unregister_all()
+
 
 print('Addon Loaded')
+
 
 # --init--
 # registration

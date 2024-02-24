@@ -28,4 +28,3 @@ def register_all():
 def unregister_all():
     cp.unregister_control_panel()
     pgps.unregister_property_groups()
-    
