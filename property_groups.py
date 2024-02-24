@@ -75,13 +75,13 @@ SystemDataClasses = [
     MultiItem,
 ]
 
-def register_property_groups():
+def mod_register():
     for system_class in SystemDataClasses:
         bpy.utils.register_class(system_class)
     bpy.types.Scene.MultiItemPool = CollectionProperty(type=MultiItem)
     bpy.types.Scene.CurrentPanelNumber = bpy.props.IntProperty(default=0)
 
-def unregister_property_groups():
+def mod_unregister():
     for system_class in SystemDataClasses:
         bpy.utils.unregister_class(system_class)
     del bpy.types.Scene.MultiItemPool

@@ -53,9 +53,14 @@ def display_item(multi_item):
         if child.generic_type == 'FOLDER':
             display_item(child)
 
-
 def draw_panel(multi_item):
     
+    class GENERIC_PT_Panel(bpy.types.Panel):
+        bl_space_type, bl_region_type, bl_category = 'VIEW_3D', 'UI', 'Dust Panel'
+        bl_idname = multi_item.panel_id
+        bl_label = ''
+        bl_parent_id = multi_item.parent_id
+
     template_button_name = 'btn.' + str(multi_item.panel_number) + '_' 
 
     is_child = True if multi_item.parent_id != 'CONTROL_PT_Panel' else False

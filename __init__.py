@@ -46,7 +46,7 @@ def register():
 
 
 def unregister():
-    reg.unregister_all()
+    reg.register_all(False)
 
 print('Addon Loaded')
 

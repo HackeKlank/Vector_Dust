@@ -64,10 +64,10 @@ class CONTROL_OT_Clear(bpy.types.Operator):
 SystemPanels = [CONTROL_OT_SqnAddButton, CONTROL_OT_Clear, CONTROL_PT_Panel, ]
 
 
-def register_control_panel():
+def mod_register():
     for system_class in SystemPanels:
         bpy.utils.register_class(system_class)
 
-def unregister_control_panel():
+def mod_unregister():
     for system_class in SystemPanels:
         bpy.utils.unregister_class(system_class)
