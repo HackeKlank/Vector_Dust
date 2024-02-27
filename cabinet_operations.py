@@ -24,13 +24,14 @@ bops = importlib.util.module_from_spec(spec_2)
 spec_2.loader.exec_module(bops)
 
 
-def clear_undrawns():
+def empty_undrawns():
     MultiItemPool = bpy.context.scene.MultiItemPool
     count = len(MultiItemPool)
     while count > 0:
         count -= 1
         item = MultiItemPool[count]
-        if not item.is_drawn:
+        is_value_present = any(item.panel_number == i.value for i in bpy.context.scene.ErasedPanels)
+        if is_value_present:
             position = get_position(item)
             MultiItemPool.remove(position)
 
@@ -46,7 +47,7 @@ def get_multi_item(panel_number):
     for item in MultiItemPool:
         if item.panel_number == panel_number:
             return item
-    return {'NO PANEL FOUND'}
+    return None
 
 def file_panel(parent_item, type):
     bpy.context.scene.CurrentPanelNumber += 1

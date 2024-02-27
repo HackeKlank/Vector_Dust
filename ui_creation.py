@@ -23,8 +23,7 @@ def erase_panels():
         length -= 1
         item = MultiItemPool[length]
         panel_class_name = item.panel_id  # replace with your panel class's bl_idname
-        if item.is_drawn:
-            setattr(item, 'is_drawn', False)
+        if hasattr(bpy.types, panel_class_name):
             cls = getattr(bpy.types, panel_class_name)
             bpy.utils.unregister_class(cls)
 
@@ -135,10 +134,6 @@ def draw_panel(multi_item):
 
             bpy.utils.register_class(SQN_PT_Panel)
 
-    if hasattr(bpy.types, multi_item.panel_id):
-        setattr(multi_item, 'is_drawn', True) 
-    else: 
-        setattr(multi_item, 'is_drawn', False)
 
 
 # Button Creation
@@ -180,9 +175,10 @@ def button_operation(panel_number: int, function:str):
                     item = offspring[count]
                     panel = getattr(bpy.types, item.panel_id, None)
                     if panel is not None:
-                        item.is_drawn = False
                         bpy.utils.unregister_class(panel)
-                cbt.clear_undrawns()
+                        new = bpy.context.scene.ErasedPanels.add()
+                        new.value = item.panel_number
+                cbt.empty_undrawns()
 
             case 'swap_up':
 
@@ -190,7 +186,6 @@ def button_operation(panel_number: int, function:str):
                 sibling_position = cbt.get_next_sibling(item_in)
 
                 MultiItemPool.move(sibling_position, current_position)
-
 
             case 'swap_down':
                 

@@ -10,6 +10,10 @@ class FloatPropertyGroup(bpy.types.PropertyGroup):
     value: bpy.props.FloatProperty()
 
 
+class IntPropertyGroup(bpy.types.PropertyGroup):
+    value: bpy.props.IntProperty()
+
+
 class SequenceFolder(bpy.types.PropertyGroup):
     name: StringProperty(default='Bundle')
 
@@ -68,7 +72,7 @@ class MultiItem(bpy.types.PropertyGroup):
     parent_id: StringProperty(default='CONTROL_PT_Panel')
 
 SystemDataClasses = [
-    StringPropertyGroup, FloatPropertyGroup,
+    StringPropertyGroup, FloatPropertyGroup, IntPropertyGroup,
     GridMakerPanel, TransformationPanel, VariablesPanel, FunctionsPanel,
     SequenceFolder, IterationFolder,
     MultiItem,
@@ -78,10 +82,12 @@ def register_property_groups():
     for system_class in SystemDataClasses:
         bpy.utils.register_class(system_class)
     bpy.types.Scene.MultiItemPool = CollectionProperty(type=MultiItem)
+    bpy.types.Scene.ErasedPanels = CollectionProperty(type=IntPropertyGroup)
     bpy.types.Scene.CurrentPanelNumber = bpy.props.IntProperty(default=0)
 
 def unregister_property_groups():
     for system_class in SystemDataClasses:
         bpy.utils.unregister_class(system_class)
     del bpy.types.Scene.MultiItemPool
+    del bpy.types.Scene.ErasedPanels
     del bpy.types.Scene.CurrentPanelNumber

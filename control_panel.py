@@ -55,7 +55,7 @@ class CONTROL_OT_Clear(bpy.types.Operator):
 
     def execute(self, context):
         ui.erase_panels()
-        cbt.clear_undrawns()
+        cbt.empty_undrawns()
         CurrentPanelNumber = bpy.context.scene.CurrentPanelNumber
         bpy.context.scene.CurrentPanelNumber = 0
         return {'FINISHED'}
